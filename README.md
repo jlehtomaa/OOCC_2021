@@ -1,2 +1,0 @@
-# geogame
-Geoengineering coalitions model
