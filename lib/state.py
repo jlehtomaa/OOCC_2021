@@ -32,8 +32,8 @@ class State:
         self.min_power = min_power
         self.coalition_powers = [c.total_power for c in self.coalitions]
 
-        assert np.sum(self.coalition_powers) == 1., ("Coalition powers "
-                                                     "must sum up to 1.")
+        assert np.isclose(np.sum(self.coalition_powers), 1., atol=1e-12),\
+            "Coalition powers must sum up to 1."
 
     @property
     def strongest_coalition(self) -> Coalition:
