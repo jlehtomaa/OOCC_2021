@@ -21,8 +21,7 @@ class Coalition:
 
     @property
     def avg_ideal_G(self) -> float:
-        """ Eq. (B.9). Coalition's average ideal geoengineering level.
-        """
+        """ Eq. (B.9). Coalition's average ideal geoengineering level."""
         alphas = [country.ideal_geoengineering_level
                   for country in self.members]
         etas = [country.weighted_damage for country in self.members]
