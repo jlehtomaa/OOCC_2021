@@ -21,8 +21,7 @@ class MDP:
         self.discounting = discounting
 
     def solve_value_func(self,
-                         player: str,
-                         payoffs: pd.DataFrame) -> np.ndarray:
+                         payoffs) -> np.ndarray:
         """
         Solve the linear system for an individual player.
 
@@ -43,7 +42,7 @@ class MDP:
                 A[s][s_next] = self.discounting * prob
 
         A -= np.eye(self.n_states)
-        b = -(1-self.discounting) * payoffs.loc[:, player]
+        b = -(1-self.discounting) * payoffs
         x = np.linalg.solve(A, b)
 
         assert np.allclose(np.dot(A, x), b)

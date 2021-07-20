@@ -7,14 +7,15 @@ class TransitionProbabilities:
                  df: pd.DataFrame,
                  effectivity: np.ndarray,
                  players: list, states: list,
-                 protocol: dict):
+                 protocol: dict,
+                 unanimity_required: bool):
 
         self.df = df
         self.effectivity = effectivity
         self.players = players
         self.states = states
         self.protocol = protocol
-        self.unanimity_required = True
+        self.unanimity_required = unanimity_required
 
         n_players = len(players)
         n_states = len(states)
@@ -25,7 +26,7 @@ class TransitionProbabilities:
         self.P_proposals = np.zeros((n_players, n_states, n_states))
         self.P_approvals = np.zeros((n_players, n_states, n_states))
 
-    def get_transition_probabilities(self):
+    def get_probabilities(self):
         if self.unanimity_required:
             return self.transition_probabilities_with_unanimity()
         else:
@@ -273,7 +274,7 @@ class TransitionProbabilities:
 #                 p_proposed = protocol[proposer] * p_proposal
 
 #                 # If proposed and approved, state changes.
-#                 P[current_state_idx][next_state_idx] += p_proposed * p_approved
+#                 P[current_state_idx][next_state_idx] += p_proposed*p_approved
 #                 # Otherwise, state remains unchanged.
 #                 P[current_state_idx][current_state_idx] += p_proposed *\
 #                     p_rejected
