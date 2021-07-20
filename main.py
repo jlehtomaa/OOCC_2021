@@ -8,7 +8,8 @@ from lib.mdp import MDP
 from lib.utils import (derive_effectivity,
                        get_payoff_matrix,
                        get_geoengineering_levels,
-                       verify_equilibrium)
+                       verify_equilibrium,
+                       write_result_tables_to_latex)
 
 
 def run_experiment(config):
@@ -47,7 +48,7 @@ def run_experiment(config):
 
     payoffs = get_payoff_matrix(states=states, columns=config["players"])
     geoengineering = get_geoengineering_levels(states=states)
-
+    print(geoengineering)
     # 3. Read in the strategy profile excel table.
     # Note that the effectivity correspondence is indirectly
     # deduced from the raw excel sheet by assuming that (player, approval)
@@ -87,7 +88,15 @@ def run_experiment(config):
 
     # 6. Return all values calculated for this experiment and
     # pass them to the final check of strategy consistency.
+
+    P = pd.DataFrame(P, index=config["state_names"],
+                     columns=config["state_names"])
+
+    geoengineering = pd.DataFrame.from_dict(geoengineering, orient='index',
+                                            columns=["G"])
+
     experiment_results = dict(
+        experiment_name=config["experiment_name"],
         V=V, P=P, geoengineering=geoengineering, payoffs=payoffs,
         P_proposals=P_proposals, P_approvals=P_approvals,
         players=config["players"], state_names=config["state_names"],
@@ -115,7 +124,7 @@ def main():
 
     experiment_configs = {
         "weak_governance": dict(
-            experiment_name="Main text: weak governance",
+            experiment_name="main_text_weak_governance",
             m_damage={player: 1. for player in players},
             power_rule="weak_governance",
             min_power=None,
@@ -124,7 +133,7 @@ def main():
         ),
 
         "power_threshold": dict(
-            experiment_name="Main text: power threshold",
+            experiment_name="main_text_power_threshold",
             m_damage={player: 1. for player in players},
             power_rule="power_threshold",
             min_power=0.5,
@@ -133,7 +142,7 @@ def main():
         ),
 
         "power_threshold_extra_1": dict(
-            experiment_name="Supplementary: with unanimity",
+            experiment_name="supplementary_with_unanimity",
             m_damage={"W": 0.75, "T": 1.25, "C": 1.},
             power_rule="power_threshold",
             min_power=0.5,
@@ -142,7 +151,7 @@ def main():
         ),
 
         "power_threshold_extra_2": dict(
-            experiment_name="Supplementary: without unanimity",
+            experiment_name="supplementary_without_unanimity",
             m_damage={"W": 0.75, "T": 1.25, "C": 1.},
             power_rule="power_threshold",
             min_power=0.5,
@@ -158,6 +167,9 @@ def main():
         success, message = verify_equilibrium(experiment_results)
 
         assert success, message
+        write_result_tables_to_latex(experiment_results,
+                                     variables=["V", "payoffs",
+                                                "geoengineering"])
 
         print("Experiment:", experiment)
         print("Status:", message)

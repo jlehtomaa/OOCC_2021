@@ -218,3 +218,14 @@ def verify_equilibrium(result):
                if not check[0]]
 
         return False, '\n'.join(msg)
+
+
+def write_result_tables_to_latex(result, variables, results_path="./results",
+                                 float_format="%.5f"):
+
+    experiment = result['experiment_name']
+    for variable in variables:
+
+        path = f"{results_path}/{variable}_{experiment}.tex"
+        result[variable].to_latex(buf=path, float_format=float_format,
+                                  caption=f"{experiment}: {variable}")
