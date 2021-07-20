@@ -110,7 +110,7 @@ def main():
         discounting=0.99,
         players=players,
         state_names=['()', '(TC)', '(WC)', '(WT)', '(WTC)'],
-        strategy_table_path="./data/"
+        strategy_table_path="./strategy_tables/"
     )
 
     experiment_configs = {
@@ -119,7 +119,7 @@ def main():
             m_damage={player: 1. for player in players},
             power_rule="weak_governance",
             min_power=None,
-            strategy_table_name="strategy_table_weak_governance.xlsx",
+            strategy_table_name="weak_governance.xlsx",
             unanimity_required=True
         ),
 
@@ -128,7 +128,7 @@ def main():
             m_damage={player: 1. for player in players},
             power_rule="power_threshold",
             min_power=0.5,
-            strategy_table_name="strategy_table_power_threshold.xlsx",
+            strategy_table_name="power_threshold.xlsx",
             unanimity_required=True
         ),
 
@@ -137,7 +137,7 @@ def main():
             m_damage={"W": 0.75, "T": 1.25, "C": 1.},
             power_rule="power_threshold",
             min_power=0.5,
-            strategy_table_name="strategy_table_power_threshold.xlsx",
+            strategy_table_name="power_threshold.xlsx",
             unanimity_required=True
         ),
 
@@ -146,7 +146,7 @@ def main():
             m_damage={"W": 0.75, "T": 1.25, "C": 1.},
             power_rule="power_threshold",
             min_power=0.5,
-            strategy_table_name="strategy_table_power_threshold_no_unanimity.xlsx",
+            strategy_table_name="power_threshold_no_unanimity.xlsx",
             unanimity_required=False
         )
     }

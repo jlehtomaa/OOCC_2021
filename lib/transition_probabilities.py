@@ -3,6 +3,29 @@ import pandas as pd
 
 
 class TransitionProbabilities:
+    """ Translates the equilibrium strategies into transition
+    probabilities between different states.
+
+    Arguments:
+      df: A dataframe containing the strategy profiles of all players.
+      effectivity: The effectivity correspondence from derive_effectivity().
+      players: List (str) of all players in the game.
+      states: List (str) of all possible states of the system.
+      protocol: Dict with players as keys and probabilities of being chosen
+                as the proposer as values.
+
+    Returns:
+      P: Size (n_states, n_states) matrix of transition probabilities of the
+         Markov Decision Process. Rows denote current states,
+         and columns the possible next states.
+      P_proposals: Size (n_players, n_states, n_states) array. Each entry is
+                   the probability that player i, IF chosen as proposer,
+                   suggests a move from state x to a new state y.
+      P_approvals: Size (n_players, n_states, n_states) array. Each entry is
+                   probability that the proposition by player i to move from
+                   state x to a new state y gets accepted by the
+                   approval committee.
+    """
     def __init__(self,
                  df: pd.DataFrame,
                  effectivity: np.ndarray,
@@ -192,97 +215,3 @@ class TransitionProbabilities:
 
         self.safety_checks()
         return (self.P, self.P_proposals, self.P_approvals)
-
-
-# def calculate_transition_probabilities(df: pd.DataFrame,
-#                                        effectivity: np.ndarray,
-#                                        players: list, states: list,
-#                                        protocol: dict) -> tuple:
-
-#     """ Translates the equilibrium strategies into transition
-#     probabilities between different states.
-
-#     Arguments:
-#       df: A dataframe containing the strategy profiles of all players.
-#       effectivity: The effectivity correspondence from derive_effectivity().
-#       players: List (str) of all players in the game.
-#       states: List (str) of all possible states of the system.
-#       protocol: Dict with players as keys and probabilities of being chosen
-#                 as the proposer as values.
-
-#     Returns:
-#       P: Size (n_states, n_states) matrix of transition probabilities of the
-#          Markov Decision Process. Rows denote current states,
-#          and columns the possible next states.
-#       P_proposals: Size (n_players, n_states, n_states) array. Each entry is
-#                    the probability that player i, IF chosen as proposer,
-#                    suggests a move from state x to a new state y.
-#       P_approvals: Size (n_players, n_states, n_states) array. Each entry is
-#                    probability that the proposition by player i to move from
-#                    state x to a new state y gets accepted by the
-#                    approval committee.
-#     """
-
-#     n_players = len(players)
-#     n_states = len(states)
-
-#     # Capital P's stand for probability matrices, lowercase p's for
-#     # scalar probability values.
-#     P = np.zeros((n_states, n_states))
-#     P_proposals = np.zeros((n_players, n_states, n_states))
-#     P_approvals = np.zeros((n_players, n_states, n_states))
-
-#     for prop_idx, proposer in enumerate(players):
-#         for current_state_idx, current_state in enumerate(states):
-#             for next_state_idx, next_state in enumerate(states):
-
-#                 # The subset of players with the power to
-#                 # approve this transition.
-#                 approval_committee = effectivity[prop_idx, :,
-#                                                  current_state_idx,
-#                                                  next_state_idx] == 1
-#                 approvers = np.array(players)[approval_committee]
-
-#                 # Probability that proposer proposes next_state while
-#                 # in current_state.
-#                 p_proposal = df.loc[(current_state, 'Proposition', np.nan),
-#                                     (f'Proposer {proposer}', next_state)]
-
-#                 P_proposals[prop_idx, current_state_idx,
-#                             next_state_idx] = p_proposal
-
-#                 # Maintaining status quo is trivially approved.
-#                 if current_state == next_state:
-#                     p_approved = 1.
-#                 # If the approval committee is empty, the state transition
-#                 # is impossible.
-#                 elif len(approvers) == 0:
-#                     p_approved = 0.
-#                 # Otherwise, the acceptance requires the unanimous approval
-#                 # of the approval committee.
-#                 else:
-#                     p_approved = np.prod(
-#                             df.loc[(current_state, 'Acceptance', approvers),
-#                                    (f'Proposer {proposer}', next_state)])
-
-#                 P_approvals[prop_idx, current_state_idx,
-#                             next_state_idx] = p_approved
-#                 p_rejected = 1 - p_approved
-
-#                 # Probability that proposer is chosen by the protocol, AND
-#                 # proposes the transition current_state -> next_state.
-#                 p_proposed = protocol[proposer] * p_proposal
-
-#                 # If proposed and approved, state changes.
-#                 P[current_state_idx][next_state_idx] += p_proposed*p_approved
-#                 # Otherwise, state remains unchanged.
-#                 P[current_state_idx][current_state_idx] += p_proposed *\
-#                     p_rejected
-
-#     # Final safety checks.
-#     assert np.isclose(np.sum(P, axis=1), 1).all()
-#     assert (0. <= P).all() and (P <= 1.).all()
-#     assert (0. <= P_proposals).all() and (P_proposals <= 1.).all()
-#     assert (0. <= P_approvals).all() and (P_approvals <= 1.).all()
-
-#     return (P, P_proposals, P_approvals)
