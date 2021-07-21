@@ -68,18 +68,17 @@ def derive_effectivity(df: pd.DataFrame, players: list,
     """
     n_players = len(players)
     n_states = len(states)
-
-    effectivity = np.zeros((n_players, n_players, n_states, n_states))
+    effectivity = {}
+    #effectivity = np.zeros((n_players, n_players, n_states, n_states))
     # The dimensions are: [proposer, responder, current_state, next_state]
 
     for prop_idx, proposer in enumerate(players):
 
         # Consider all possible current states and proposed
         # next states.
-        for current_state_idx, current_state in enumerate(states):
-            for next_state_idx, next_state in enumerate(states):
+        for current_state in states:
+            for next_state in states:
                 for responder in players:
-                    resp_idx = players.index(responder)
 
                     resp_val = df.loc[(current_state, 'Acceptance', responder),
                                       (f'Proposer {proposer}', next_state)]
@@ -88,14 +87,16 @@ def derive_effectivity(df: pd.DataFrame, players: list,
                     # is a member of the approval committee.
                     is_member = int(~np.isnan(resp_val))
 
-                    effectivity[prop_idx, resp_idx, current_state_idx,
-                                next_state_idx] = is_member
+                    idx = (proposer, current_state, next_state, responder)
+                    effectivity[idx] = is_member
+
+                    #effectivity[prop_idx, resp_idx, current_state_idx,
+                    #            next_state_idx] = is_member
 
                 # Trivially, the proposer must approve the transition,
                 # and is therefore included in the effectivity correspondence.
                 if current_state == next_state:
-                    effectivity[prop_idx, prop_idx, current_state_idx,
-                                next_state_idx] = 1
+                    effectivity[(proposer, proposer, current_state, next_state)] =1
 
     return effectivity
 
