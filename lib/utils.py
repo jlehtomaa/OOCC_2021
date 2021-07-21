@@ -66,16 +66,11 @@ def derive_effectivity(df: pd.DataFrame, players: list,
                      a member of the approval committee, when the proposer
                      suggests a transition from current_state to next_state.
     """
-    n_players = len(players)
-    n_states = len(states)
+
     effectivity = {}
-    #effectivity = np.zeros((n_players, n_players, n_states, n_states))
     # The dimensions are: [proposer, responder, current_state, next_state]
 
-    for prop_idx, proposer in enumerate(players):
-
-        # Consider all possible current states and proposed
-        # next states.
+    for proposer in players:
         for current_state in states:
             for next_state in states:
                 for responder in players:
@@ -90,13 +85,10 @@ def derive_effectivity(df: pd.DataFrame, players: list,
                     idx = (proposer, current_state, next_state, responder)
                     effectivity[idx] = is_member
 
-                    #effectivity[prop_idx, resp_idx, current_state_idx,
-                    #            next_state_idx] = is_member
-
                 # Trivially, the proposer must approve the transition,
                 # and is therefore included in the effectivity correspondence.
                 if current_state == next_state:
-                    effectivity[(proposer, proposer, current_state, next_state)] =1
+                    effectivity[(proposer, proposer, current_state, next_state)] = 1
 
     return effectivity
 
