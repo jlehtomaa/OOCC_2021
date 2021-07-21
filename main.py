@@ -48,7 +48,7 @@ def run_experiment(config):
 
     payoffs = get_payoff_matrix(states=states, columns=config["players"])
     geoengineering = get_geoengineering_levels(states=states)
-    print(geoengineering)
+
     # 3. Read in the strategy profile excel table.
     # Note that the effectivity correspondence is indirectly
     # deduced from the raw excel sheet by assuming that (player, approval)
@@ -57,6 +57,7 @@ def run_experiment(config):
     # excel input, all missing values are filled with zeros.
     excel_file = config["strategy_table_path"] + config["strategy_table_name"]
     strategy_df = pd.read_excel(excel_file, header=[0, 1], index_col=[0, 1, 2])
+
     effectivity = derive_effectivity(df=strategy_df,
                                      players=config["players"],
                                      states=config["state_names"])
@@ -166,9 +167,13 @@ def main():
         experiment_results = run_experiment(config)
         success, message = verify_equilibrium(experiment_results)
 
-        assert success, message
+        try:
+            assert success
+        except AssertionError:
+            print(message)
+
         write_result_tables_to_latex(experiment_results,
-                                     variables=["V", "payoffs",
+                                     variables=["V", "payoffs", "P",
                                                 "geoengineering"])
 
         print("Experiment:", experiment)

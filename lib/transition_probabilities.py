@@ -101,7 +101,7 @@ class TransitionProbabilities:
                     elif len(approvers) == 0:
                         p_approved = 0.
                     # Otherwise, the acceptance requires the unanimous approval
-                    # of the approval committee.
+                    # of the entire approval committee.
                     else:
                         p_approved = np.prod(
                           self.df.loc[(current_state, 'Acceptance', approvers),
