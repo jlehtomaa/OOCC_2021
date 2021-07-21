@@ -1,11 +1,13 @@
 import numpy as np
+import pandas as pd
 from lib.mdp import MDP
 
 
 def test_solve_value_func():
 
     states = ['s1', 's2', 's3']
-    transition_probs = np.eye(len(states))
+    transition_probs = pd.DataFrame(np.eye(len(states)), index=states,
+                                    columns=states)
     payoffs = 1234. * np.ones(len(states))
 
     mdp = MDP(n_states=len(states),

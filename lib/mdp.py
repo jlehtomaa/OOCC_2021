@@ -37,7 +37,7 @@ class MDP:
         for s in range(self.n_states):
             # ...consider all possible next states
             P = self.transition_probs
-            for s_next, prob in enumerate(P[s, :]):
+            for s_next, prob in enumerate(P.values[s, :]):
                 A[s][s_next] = self.discounting * prob
 
         A -= np.eye(self.n_states)

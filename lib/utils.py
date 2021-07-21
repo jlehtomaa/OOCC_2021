@@ -36,7 +36,7 @@ def get_geoengineering_levels(states: list) -> dict:
     for state in states:
         G[state.name] = state.geo_deployment_level
 
-    return G
+    return pd.DataFrame.from_dict(G, orient='index', columns=["G"])
 
 
 def derive_effectivity(df: pd.DataFrame, players: list,
@@ -95,8 +95,8 @@ def derive_effectivity(df: pd.DataFrame, players: list,
 
 def verify_proposals(players, states, P_proposals, P_approvals, V):
 
-    for proposer_idx, proposer in enumerate(players):
-        for current_state_idx, current_state in enumerate(states):
+    for proposer in players:
+        for current_state in states:
 
             # All next states for which the proposer attaches
             # a positive proposition probability.
@@ -108,14 +108,14 @@ def verify_proposals(players, states, P_proposals, P_approvals, V):
 
             for next_state_idx, next_state in enumerate(states):
 
-                p_proposed = P_proposals[proposer_idx, current_state_idx,
-                                         next_state_idx]
+                p_proposed = P_proposals[(proposer, current_state,
+                                         next_state)]
 
                 if p_proposed > 0.:
                     P_prop_pos_states.append(next_state)
 
-                p_approved = P_approvals[proposer_idx, current_state_idx,
-                                         next_state_idx]
+                p_approved = P_approvals[(proposer, current_state,
+                                         next_state)]
                 p_rejected = 1 - p_approved
 
                 V_current = V.loc[current_state, proposer]
@@ -143,20 +143,29 @@ def verify_proposals(players, states, P_proposals, P_approvals, V):
     return True, "Test passed."
 
 
+def get_approval_committee(effectivity, players, proposer,
+                           current_state, next_state):
+    return [player for player in players
+            if effectivity[(proposer, current_state, next_state, player)] == 1]
+
+
 def verify_approvals(players, states, effectivity, V, strategy_df):
 
     # Consider all proposers one by one.
-    for prop_idx, proposer in enumerate(players):
-        for current_state_idx, current_state in enumerate(states):
-
-            for next_state_idx, next_state in enumerate(states):
+    for proposer in players:
+        for current_state in states:
+            for next_state in states:
                 # For all possible state transitions, get the
                 # countries whose approval is needed.
-                approval_committee_mask = effectivity[
-                                            prop_idx, :,
-                                            current_state_idx,
-                                            next_state_idx] == 1
-                approvers = np.array(players)[approval_committee_mask]
+                # approval_committee_mask = effectivity[
+                #                             prop_idx, :,
+                #                             current_state_idx,
+                #                             next_state_idx] == 1
+                # approvers = np.array(players)[approval_committee_mask]
+                approvers = get_approval_committee(
+                                            effectivity, players,
+                                            proposer, current_state,
+                                            next_state)
 
                 for approver in approvers:
 

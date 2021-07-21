@@ -46,5 +46,5 @@ def test_get_payoff_matrix_all_zeros():
 
 
 def test_get_geoengineering_levels_all_zeros():
-    G = get_geoengineering_levels(states)
-    assert all(val == 0. for val in G.values())
+    df = get_geoengineering_levels(states)
+    assert bool((df == 0.).all().all())

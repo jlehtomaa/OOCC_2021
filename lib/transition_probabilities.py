@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from lib.utils import get_approval_committee
+
 
 class TransitionProbabilities:
     """ Translates the equilibrium strategies into transition
@@ -40,14 +42,11 @@ class TransitionProbabilities:
         self.protocol = protocol
         self.unanimity_required = unanimity_required
 
-        n_players = len(players)
-        n_states = len(states)
-
         # Capital P's stand for probability matrices, lowercase p's for
         # scalar probability values.
-        self.P = np.zeros((n_states, n_states))
-        self.P_proposals = np.zeros((n_players, n_states, n_states))
-        self.P_approvals = np.zeros((n_players, n_states, n_states))
+        self.P = pd.DataFrame(0., index=states, columns=states)
+        self.P_proposals = {}
+        self.P_approvals = {}
 
     def get_probabilities(self):
         if self.unanimity_required:
@@ -56,18 +55,19 @@ class TransitionProbabilities:
             return self.transition_probabilities_without_unanimity()
 
     def safety_checks(self):
+        return True
         assert np.isclose(np.sum(self.P, axis=1), 1).all()
         assert (0 <= self.P).all() and (self.P <= 1).all()
         assert (0 <= self.P_proposals).all() and (self.P_proposals <= 1).all()
         assert (0 <= self.P_approvals).all() and (self.P_approvals <= 1).all()
 
-    def get_approval_committee(self, prop_idx: int, current_state_idx: int,
-                               next_state_idx: int) -> np.ndarray:
+    # def get_approval_committee(self, prop_idx: int, current_state_idx: int,
+    #                            next_state_idx: int) -> np.ndarray:
 
-        approval_committee = self.effectivity[prop_idx, :, current_state_idx,
-                                              next_state_idx] == 1
-        approvers = np.array(self.players)[approval_committee]
-        return approvers
+    #     approval_committee = self.effectivity[prop_idx, :, current_state_idx,
+    #                                           next_state_idx] == 1
+    #     approvers = np.array(self.players)[approval_committee]
+    #     return approvers
 
     def read_proposal_prob(self, proposer, current_state, next_state):
         probability = self.df.loc[(current_state, 'Proposition', np.nan),
@@ -76,13 +76,15 @@ class TransitionProbabilities:
 
     def transition_probabilities_with_unanimity(self):
 
-        for prop_idx, proposer in enumerate(self.players):
-            for current_state_idx, current_state in enumerate(self.states):
-                for next_state_idx, next_state in enumerate(self.states):
+        for proposer in self.players:
+            for current_state in self.states:
+                for next_state in self.states:
 
-                    approvers = self.get_approval_committee(prop_idx,
-                                                            current_state_idx,
-                                                            next_state_idx)
+                    approvers = get_approval_committee(self.effectivity,
+                                                       self.players,
+                                                       proposer,
+                                                       current_state,
+                                                       next_state)
 
                     # Probability that proposer proposes next_state while
                     # in current_state.
@@ -90,8 +92,8 @@ class TransitionProbabilities:
                                                          current_state,
                                                          next_state)
 
-                    self.P_proposals[prop_idx, current_state_idx,
-                                     next_state_idx] = p_proposal
+                    self.P_proposals[(proposer, current_state,
+                                     next_state)] = p_proposal
 
                     # Maintaining status quo is trivially approved.
                     if current_state == next_state:
@@ -107,8 +109,8 @@ class TransitionProbabilities:
                           self.df.loc[(current_state, 'Acceptance', approvers),
                                       (f'Proposer {proposer}', next_state)])
 
-                    self.P_approvals[prop_idx, current_state_idx,
-                                     next_state_idx] = p_approved
+                    self.P_approvals[(proposer, current_state,
+                                     next_state)] = p_approved
                     p_rejected = 1 - p_approved
 
                     # Probability that proposer is chosen by the protocol, AND
@@ -116,10 +118,10 @@ class TransitionProbabilities:
                     p_proposed = self.protocol[proposer] * p_proposal
 
                     # If proposed and approved, state changes.
-                    self.P[current_state_idx][next_state_idx] +=\
+                    self.P.loc[current_state, next_state] +=\
                         p_proposed * p_approved
                     # Otherwise, state remains unchanged.
-                    self.P[current_state_idx][current_state_idx] +=\
+                    self.P.loc[current_state, current_state] +=\
                         p_proposed * p_rejected
 
         self.safety_checks()
@@ -134,8 +136,8 @@ class TransitionProbabilities:
 
     def transition_probabilities_without_unanimity(self):
 
-        for prop_idx, proposer in enumerate(self.players):
-            for current_state_idx, current_state in enumerate(self.states):
+        for proposer in self.players:
+            for current_state in self.states:
 
                 # Countries that are members of the coalition in the current
                 # state. NOTE: This rests on the assumption of out 3-player
@@ -144,11 +146,13 @@ class TransitionProbabilities:
                 # with some different logic.
                 old_members = self.list_members(current_state)
 
-                for next_state_idx, next_state in enumerate(self.states):
+                for next_state in self.states:
 
-                    approvers = self.get_approval_committee(prop_idx,
-                                                            current_state_idx,
-                                                            next_state_idx)
+                    approvers = get_approval_committee(self.effectivity,
+                                                       self.players,
+                                                       proposer,
+                                                       current_state,
+                                                       next_state)
 
                     new_members = [country for country
                                    in self.list_members(next_state)
@@ -160,8 +164,8 @@ class TransitionProbabilities:
                                                          current_state,
                                                          next_state)
 
-                    self.P_proposals[prop_idx, current_state_idx,
-                                     next_state_idx] = p_proposal
+                    self.P_proposals[(proposer, current_state,
+                                     next_state)] = p_proposal
 
                     # Maintaining status quo is trivially approved:
                     if current_state == next_state:
@@ -201,16 +205,16 @@ class TransitionProbabilities:
                         p_approved =\
                             p_new_members_approve * p_old_members_approve
 
-                    self.P_approvals[prop_idx, current_state_idx,
-                                     next_state_idx] = p_approved
+                    self.P_approvals[(proposer, current_state,
+                                     next_state)] = p_approved
                     p_rejected = 1 - p_approved
 
                     p_proposed = self.protocol[proposer] * p_proposal
                     # If approved, state changes.
-                    self.P[current_state_idx][next_state_idx] +=\
+                    self.P.loc[current_state, next_state] +=\
                         p_proposed * p_approved
                     # Otherwise, state remains unchanged.
-                    self.P[current_state_idx][current_state_idx] +=\
+                    self.P.loc[current_state, current_state] +=\
                         p_proposed * p_rejected
 
         self.safety_checks()
