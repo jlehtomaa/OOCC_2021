@@ -90,12 +90,6 @@ def run_experiment(config):
     # 6. Return all values calculated for this experiment and
     # pass them to the final check of strategy consistency.
 
-    #P = pd.DataFrame(P, index=config["state_names"],
-    #                 columns=config["state_names"])
-
-    # geoengineering = pd.DataFrame.from_dict(geoengineering, orient='index',
-    #                                         columns=["G"])
-
     experiment_results = dict(
         experiment_name=config["experiment_name"],
         V=V, P=P, geoengineering=geoengineering, payoffs=payoffs,
