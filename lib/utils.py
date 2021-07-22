@@ -103,8 +103,6 @@ def derive_effectivity(df: pd.DataFrame, players: list,
                                                        proposer, current_state,
                                                        next_state)
                     assert [proposer] == committee
-                    #print(f"PROPOSER: {proposer}, "
-                    #      f"CURRENT: {current_state}, NEXT: {next_state}")
 
     return effectivity
 
@@ -200,13 +198,7 @@ def verify_approvals(players, states, effectivity, V, strategy_df):
     for proposer in players:
         for current_state in states:
             for next_state in states:
-                # For all possible state transitions, get the
-                # countries whose approval is needed.
-                # approval_committee_mask = effectivity[
-                #                             prop_idx, :,
-                #                             current_state_idx,
-                #                             next_state_idx] == 1
-                # approvers = np.array(players)[approval_committee_mask]
+
                 approvers = get_approval_committee(
                                             effectivity, players,
                                             proposer, current_state,
