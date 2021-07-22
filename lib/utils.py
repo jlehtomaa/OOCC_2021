@@ -87,10 +87,44 @@ def derive_effectivity(df: pd.DataFrame, players: list,
 
                 # Trivially, the proposer must approve the transition,
                 # and is therefore included in the effectivity correspondence.
-                if current_state == next_state:
-                    effectivity[(proposer, proposer, current_state, next_state)] = 1
+                # That is, check that the approval value is 1.
+
+                # For every possible proposer, it is always possible to
+                # maintain the status quo without the approval of others.
+                # Therefore, for such a transition, check that the current
+                # proposer is the only member in the effectivity
+                # correspondence.
+                if current_state == next_state or is_uniform_breakout(
+                                                        proposer,
+                                                        current_state,
+                                                        next_state):
+
+                    committee = get_approval_committee(effectivity, players,
+                                                       proposer, current_state,
+                                                       next_state)
+                    assert [proposer] == committee
+                    #print(f"PROPOSER: {proposer}, "
+                    #      f"CURRENT: {current_state}, NEXT: {next_state}")
 
     return effectivity
+
+
+def is_uniform_breakout(proposer, current_state, next_state):
+
+    current_members = list_members(current_state)
+    next_members = list_members(next_state)
+
+    # If breakout from grand coalition.
+    if len(current_members) == 3 and len(next_members) == 2:
+        if proposer in current_members and proposer not in next_members:
+            return True
+
+    # If breakout from a coalition of 2 players to all singletons.
+    elif len(current_members) == 2 and len(next_members) == 0:
+        if proposer in current_members:
+            return True
+    else:
+        return False
 
 
 def verify_proposals(players, states, P_proposals, P_approvals, V):
@@ -143,10 +177,21 @@ def verify_proposals(players, states, P_proposals, P_approvals, V):
     return True, "Test passed."
 
 
+def list_members(state: str) -> list:
+    """ Lists all the member countries of the existing coalition.
+
+    list_current_members('(WTC)') returns ['W', 'T', 'C'].
+    """
+    return list(state[state.find("(")+1:state.find(")")])
+
+
 def get_approval_committee(effectivity, players, proposer,
                            current_state, next_state):
-    return [player for player in players
+
+    comm = [player for player in players
             if effectivity[(proposer, current_state, next_state, player)] == 1]
+
+    return comm
 
 
 def verify_approvals(players, states, effectivity, V, strategy_df):

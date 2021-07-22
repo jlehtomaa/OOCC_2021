@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 class MDP:
@@ -6,39 +7,34 @@ class MDP:
     General Markov Decision Process placeholder.
 
     Arguments:
-      n_states: Number of possible states to be considered.
-      transition_probs: n_states * n_states matrix of probabilities.
-      discounting: Discounting parameter.
+        n_states: Number of possible states in the system.
+        transition_probs: n_states * n_states matrix of probabilities.
+        discounting: Discounting (and farsightedness) parameter.
     """
     def __init__(self,
                  n_states: int,
-                 transition_probs: np.ndarray,
+                 transition_probs: pd.DataFrame,
                  discounting: float):
 
         self.n_states = n_states
         self.transition_probs = transition_probs
         self.discounting = discounting
 
-    def solve_value_func(self,
-                         payoffs) -> np.ndarray:
-        """
-        Solve the linear system for an individual player.
+    def solve_value_func(self, payoffs: np.ndarray) -> np.ndarray:
+        """ Solve the linear system of value functions
+        for an individual player.
 
         Arguments:
-          player: Name of the player.
-          payoffs: Matrix of payoffs, with states as rows and all players
-                   as columns.
+            payoffs: A size n_states vector of payoffs.
         """
 
         A = np.zeros((self.n_states, self.n_states))
         b = np.zeros(self.n_states)
 
-        # For every state...
-        for s in range(self.n_states):
-            # ...consider all possible next states
+        for state in range(self.n_states):
             P = self.transition_probs
-            for s_next, prob in enumerate(P.values[s, :]):
-                A[s][s_next] = self.discounting * prob
+            for next_state, prob in enumerate(P.iloc[state, :]):
+                A[state][next_state] = self.discounting * prob
 
         A -= np.eye(self.n_states)
         b = -(1-self.discounting) * payoffs

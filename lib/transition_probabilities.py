@@ -1,38 +1,45 @@
 import numpy as np
 import pandas as pd
-
-from lib.utils import get_approval_committee
+from typing import List, Dict
+from lib.utils import get_approval_committee, list_members
 
 
 class TransitionProbabilities:
-    """ Translates the equilibrium strategies into transition
+    """ Translates the equilibrium strategies of countries into transition
     probabilities between different states.
 
     Arguments:
-      df: A dataframe containing the strategy profiles of all players.
-      effectivity: The effectivity correspondence from derive_effectivity().
-      players: List (str) of all players in the game.
-      states: List (str) of all possible states of the system.
-      protocol: Dict with players as keys and probabilities of being chosen
-                as the proposer as values.
+        df: A dataframe containing the strategy profiles of all players.
+        effectivity: The effectivity correspondence calculated in
+                     lib.utils.derive_effectivity().
+        players: List (str) of all players in the game.
+        states: List (str) of all possible states of the system.
+        protocol: Dict with player names as keys and probabilities
+                  of being chosen as the proposer as values.
+        unanimity_required: A boolean value to indicate whether the
+                approval committee needs to be perfectly unanimous for a
+                proposition to pass. If False, a simple majority is enough.
 
     Returns:
-      P: Size (n_states, n_states) matrix of transition probabilities of the
-         Markov Decision Process. Rows denote current states,
-         and columns the possible next states.
-      P_proposals: Size (n_players, n_states, n_states) array. Each entry is
-                   the probability that player i, IF chosen as proposer,
-                   suggests a move from state x to a new state y.
-      P_approvals: Size (n_players, n_states, n_states) array. Each entry is
-                   probability that the proposition by player i to move from
-                   state x to a new state y gets accepted by the
-                   approval committee.
+        P: Size (n_states, n_states) matrix of transition probabilities of the
+           Markov Decision Process. Rows denote current states,
+           and columns the possible next states.
+        P_proposals: A dictionary with keys determined by triplets
+                     (i, x, y). Each value is the probability that player i,
+                     IF chosen as proposer, suggests a move from the current
+                     state x to a new state y.
+        P_approvals: A dictionary with keys determined by triplets
+                     (i, x, y). Each value is the probability that the
+                     transition proposed by player i, to move from current
+                     state x to a new state y, gets accepted by the
+                     approval committee.
     """
     def __init__(self,
                  df: pd.DataFrame,
-                 effectivity: np.ndarray,
-                 players: list, states: list,
-                 protocol: dict,
+                 effectivity: Dict[tuple, int],
+                 players: List[str],
+                 states: List[str],
+                 protocol: Dict[str, float],
                  unanimity_required: bool):
 
         self.df = df
@@ -42,8 +49,8 @@ class TransitionProbabilities:
         self.protocol = protocol
         self.unanimity_required = unanimity_required
 
-        # Capital P's stand for probability matrices, lowercase p's for
-        # scalar probability values.
+        # Notation: Capital P's stand for probability matrices,
+        # lowercase p's for scalar probability values.
         self.P = pd.DataFrame(0., index=states, columns=states)
         self.P_proposals = {}
         self.P_approvals = {}
@@ -55,45 +62,46 @@ class TransitionProbabilities:
             return self.transition_probabilities_without_unanimity()
 
     def safety_checks(self):
-        return True
-        assert np.isclose(np.sum(self.P, axis=1), 1).all()
-        assert (0 <= self.P).all() and (self.P <= 1).all()
-        assert (0 <= self.P_proposals).all() and (self.P_proposals <= 1).all()
-        assert (0 <= self.P_approvals).all() and (self.P_approvals <= 1).all()
+        """Check that all computed values are valid probabilities."""
+        # All rows in the state transition probability matrix sum up to one.
+        assert np.isclose(self.P.sum(axis=1), 1.).all()
 
-    # def get_approval_committee(self, prop_idx: int, current_state_idx: int,
-    #                            next_state_idx: int) -> np.ndarray:
-
-    #     approval_committee = self.effectivity[prop_idx, :, current_state_idx,
-    #                                           next_state_idx] == 1
-    #     approvers = np.array(self.players)[approval_committee]
-    #     return approvers
+        # All probabilities are in [0, 1].
+        assert (0. <= self.P.values).all() and (self.P.values <= 1.).all()
+        assert all(0. <= val <= 1. for val in self.P_proposals.values())
+        assert all(0. <= val <= 1. for val in self.P_approvals.values())
 
     def read_proposal_prob(self, proposer, current_state, next_state):
+        """Reads an individual proposal entry from the strategy table."""
         probability = self.df.loc[(current_state, 'Proposition', np.nan),
                                   (f'Proposer {proposer}', next_state)]
         return probability
 
+    def read_approval_probs(self, approvers, proposer,
+                           current_state, next_state):
+
+        probability = self.df.loc[(current_state, 'Acceptance', approvers),
+                                  (f'Proposer {proposer}', next_state)]
+        return probability
+
     def transition_probabilities_with_unanimity(self):
+        """Calculate transition probabilities with a perfectly unanimous
+        approval committee.
+        """
 
         for proposer in self.players:
             for current_state in self.states:
                 for next_state in self.states:
 
-                    approvers = get_approval_committee(self.effectivity,
-                                                       self.players,
-                                                       proposer,
-                                                       current_state,
-                                                       next_state)
+                    indx = (proposer, current_state, next_state)
 
-                    # Probability that proposer proposes next_state while
-                    # in current_state.
-                    p_proposal = self.read_proposal_prob(proposer,
-                                                         current_state,
-                                                         next_state)
+                    approvers = get_approval_committee(
+                        self.effectivity, self.players, *indx)
 
-                    self.P_proposals[(proposer, current_state,
-                                     next_state)] = p_proposal
+                    # Probability that the current proposer proposes
+                    # next_state while in current_state.
+                    p_proposal = self.read_proposal_prob(*indx)
+                    self.P_proposals[indx] = p_proposal
 
                     # Maintaining status quo is trivially approved.
                     if current_state == next_state:
@@ -105,12 +113,12 @@ class TransitionProbabilities:
                     # Otherwise, the acceptance requires the unanimous approval
                     # of the entire approval committee.
                     else:
-                        p_approved = np.prod(
-                          self.df.loc[(current_state, 'Acceptance', approvers),
-                                      (f'Proposer {proposer}', next_state)])
+                        prob_values = self.df.loc[
+                                      (current_state, 'Acceptance', approvers),
+                                      (f'Proposer {proposer}', next_state)]
+                        p_approved = np.prod(prob_values)
 
-                    self.P_approvals[(proposer, current_state,
-                                     next_state)] = p_approved
+                    self.P_approvals[indx] = p_approved
                     p_rejected = 1 - p_approved
 
                     # Probability that proposer is chosen by the protocol, AND
@@ -127,86 +135,127 @@ class TransitionProbabilities:
         self.safety_checks()
         return (self.P, self.P_proposals, self.P_approvals)
 
-    def list_members(self, state: str) -> list:
-        """ Lists all the member countries of the existing coalition.
-
-        list_current_members('(WTC)') returns ['W', 'T', 'C'].
-        """
-        return list(state[state.find("(")+1:state.find(")")])
-
     def transition_probabilities_without_unanimity(self):
+        """Calculate transition probabilities such that the approval is
+        required from all new members, but only from the majority of
+        existing members.
+        """
 
         for proposer in self.players:
             for current_state in self.states:
-
-                # Countries that are members of the coalition in the current
-                # state. NOTE: This rests on the assumption of out 3-player
-                # game that only one non-singleton coalitoin can exist at
-                # any time. For more players, this needs to be re-implemented
-                # with some different logic.
-                old_members = self.list_members(current_state)
-
                 for next_state in self.states:
+                    indx = (proposer, current_state, next_state)
 
-                    approvers = get_approval_committee(self.effectivity,
-                                                       self.players,
-                                                       proposer,
-                                                       current_state,
-                                                       next_state)
+                    approvers = get_approval_committee(
+                        self.effectivity, self.players, *indx)
 
-                    new_members = [country for country
-                                   in self.list_members(next_state)
-                                   if country not in old_members]
+                    # Proposal probability:
+                    # ---------------------
 
                     # Probability that proposer proposes next_state while
                     # in current_state.
-                    p_proposal = self.read_proposal_prob(proposer,
-                                                         current_state,
-                                                         next_state)
+                    p_proposal = self.read_proposal_prob(*indx)
+                    self.P_proposals[indx] = p_proposal
 
-                    self.P_proposals[(proposer, current_state,
-                                     next_state)] = p_proposal
+                    # Approval probabilities:
+                    # ----------------------
 
-                    # Maintaining status quo is trivially approved:
-                    if current_state == next_state:
-                        p_approved = 1.
                     # If the approval committee is empty, the state transition
-                    # is impossible.
-                    elif len(approvers) == 0:
+                    # is impossible. This should not really happen.
+                    if len(approvers) == 0:
                         p_approved = 0.
+                        print("WARNING: transition with empty approval comm.")
+
                     # If the approval committee only has one member, it can
-                    # decide alone whether or not to approve the transition.
+                    # decide alone whether or not to approve the transition
+                    # This covers both maintaining status quo, unilateral
+                    # breakout, and cases such as W proposing ( ) -> (WC),
+                    # where C is the only one who needs to approve.
                     elif len(approvers) == 1:
-                        p_approved = self.df.loc[
-                                   (current_state, 'Acceptance', approvers),
-                                   (f'Proposer {proposer}', next_state)].values
+                        p_approved = self.read_approval_probs(
+                         approvers, *indx).values
+
+                    # For a larger approval committee, we need to consider
+                    # the cases where majority approval committee can
+                    # validate state transitions.
                     else:
-                        # Check that all new members approve.
-                        if len(new_members) == 0:
-                            p_new_members_approve = 0.
-                        elif len(new_members) == 1 and proposer in new_members:
-                            p_new_members_approve = 1.
+                        assert len(approvers) == 2
+                        current_members = list_members(current_state)
+                        next_members = list_members(next_state)
+
+                        new_members = [country for country in next_members
+                                       if country not in current_members]
+
+                        current_non_proposer_members = [
+                            country for country in current_members
+                            if country != proposer]
+
+                        new_non_proposer_members = [
+                            country for country in new_members
+                            if country != proposer]
+
+                        if new_non_proposer_members:
+                            # CASE 1:
+                            # If there are new non-proposer members joining
+                            # the new coalition, and the proposer is not
+                            # an existing member, all of the new non-proposer 
+                            # members approve the transition.
+                            # E.g., W proposing ( ) -> (TC) or ( ) -> (WTC)
+                            # must be approved by T and C.
+
+                            # If there are new non-proposer members joining
+                            # the new coalition, and the proposer is one of
+                            # the existing members AND a member in the new
+                            # coalition that forms, all new non-proposer
+                            # members must approve the transition.
+                            # E.g., W proposing (WC) -> (WT) or (WC) -> (WTC)
+                            # must be approved by T.
+                            if (proposer not in current_members) or\
+                                (proposer in current_members and\
+                                    proposer in next_members):
+                                probs = self.read_approval_probs(
+                                    new_non_proposer_members, *indx)
+                                p_approved = np.prod(probs)
+
+                            # CASE 2:
+                            # If there are new non-proposer members joining
+                            # the new coalition, and the proposer is one of
+                            # the existing members but not a member in the
+                            # new coalition that forms, all countries in the
+                            # new coalition must approve the transition.
+                            # E.g., W proposing (WC) -> (TC) or (WT) -> (TC)
+                            # must be approved by T and C.
+                            elif (proposer in current_members) and\
+                                 (proposer not in next_members):
+                                probs = self.read_approval_probs(
+                                    next_members, *indx)
+                                p_approved = np.prod(probs)
+                            else:
+                                error_msg = (
+                                "The following transition could not be "
+                                "handled: Proposer: {}, from state "
+                                "{} to {}.").format(*indx)
+                                raise ValueError(error_msg)
+                        # CASE 3:
+                        # If there are no new non-proposer members,
+                        # at least one existing member must approve the
+                        # proposed transition. 
+                        # E.g., W proposing (TC) -> ( ) or (TC) -> (WC)
+                        # or (WTC) -> ( ) or (WTC) -> (WC) can be approved by
+                        # either T or C, or W proposing (WTC)
+                        elif not new_non_proposer_members:
+                            probs = self.read_approval_probs(
+                                    current_non_proposer_members, *indx)
+                            p_approved = np.sum(probs) - np.prod(probs)
+
                         else:
-                            p_new_members_approve = np.prod(self.df.loc[
-                                    (current_state, 'Acceptance', new_members),
-                                    (f'Proposer {proposer}', next_state)])
+                            error_msg = (
+                            "The following transition could not be "
+                            "handled: Proposer: {}, from state "
+                            "{} to {}.").format(*indx)
+                            raise ValueError(error_msg)
 
-                        # Check that majority of old members approves.
-                        if len(old_members) == 0:
-                            p_old_members_approve = 0.
-                        else:
-
-                            probs = self.df.loc[
-                                      (current_state, 'Acceptance', approvers),
-                                      (f'Proposer {proposer}', next_state)]
-                            p_old_members_approve =\
-                                np.sum(probs) - np.prod(probs)
-
-                        p_approved =\
-                            p_new_members_approve * p_old_members_approve
-
-                    self.P_approvals[(proposer, current_state,
-                                     next_state)] = p_approved
+                    self.P_approvals[indx] = p_approved
                     p_rejected = 1 - p_approved
 
                     p_proposed = self.protocol[proposer] * p_proposal
@@ -219,3 +268,5 @@ class TransitionProbabilities:
 
         self.safety_checks()
         return (self.P, self.P_proposals, self.P_approvals)
+
+#print(proposer, current_state, next_state, next_members)

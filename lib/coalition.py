@@ -1,20 +1,24 @@
 import numpy as np
+from typing import List
 from lib.country import Country
 
 
 class Coalition:
-    """ A coalition is a collection of cooperating Country instances.
+    """Coalition is a collection of cooperating Country instances.
 
     Arguments:
-      members: list of countries (instances of class Country).
+        members: list (Country) of countries.
     """
-    def __init__(self, members: list):
+    def __init__(self, members: List[Country]):
         self.members = members
         assert all(isinstance(country, Country) for country in self.members)
 
     @property
     def total_power(self) -> float:
-        """Coalition's total global power share."""
+        """Coalition's total global power share.
+
+        Equals the sum of all members' individual powers.
+        """
         power = np.sum([country.power for country in self.members])
         assert 0. <= power <= 1., "Coalition's total power must be in [0,1]."
         return power
