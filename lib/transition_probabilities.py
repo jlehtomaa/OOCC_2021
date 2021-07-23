@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict
 from lib.utils import get_approval_committee, list_members
+from lib.errors import ApprovalCommitteeError
 
 
 class TransitionProbabilities:
@@ -71,15 +72,16 @@ class TransitionProbabilities:
         assert all(0. <= val <= 1. for val in self.P_proposals.values())
         assert all(0. <= val <= 1. for val in self.P_approvals.values())
 
-    def read_proposal_prob(self, proposer, current_state, next_state):
+    def read_proposal_prob(self, proposer: str, current_state: str,
+                           next_state: str) -> float:
         """Reads an individual proposal entry from the strategy table."""
         probability = self.df.loc[(current_state, 'Proposition', np.nan),
                                   (f'Proposer {proposer}', next_state)]
         return probability
 
-    def read_approval_probs(self, approvers, proposer,
-                           current_state, next_state):
-
+    def read_approval_probs(self, approvers: List[str], proposer: str,
+                           current_state: str, next_state: str) -> float:
+        """Reads the acceptance probabilities for all members in approvers."""
         probability = self.df.loc[(current_state, 'Acceptance', approvers),
                                   (f'Proposer {proposer}', next_state)]
         return probability
@@ -122,7 +124,7 @@ class TransitionProbabilities:
                         probs = self.read_approval_probs(approvers, *indx)
                         p_approved = np.prod(probs)
                     else:
-                        raise ValueError()
+                        raise ApprovalCommitteeError(indx)
 
                     self.P_approvals[indx] = p_approved
                     p_rejected = 1 - p_approved
@@ -237,11 +239,7 @@ class TransitionProbabilities:
                                     next_members, *indx)
                                 p_approved = np.prod(probs)
                             else:
-                                error_msg = (
-                                "The following transition could not be "
-                                "handled: Proposer: {}, from state "
-                                "{} to {}.").format(*indx)
-                                raise ValueError(error_msg)
+                                raise ApprovalCommitteeError(indx)
 
                         # CASE 3:
                         # If there are no new non-proposer members,
@@ -255,11 +253,7 @@ class TransitionProbabilities:
                                     current_non_proposer_members, *indx)
                             p_approved = np.sum(probs) - np.prod(probs)
                         else:
-                            error_msg = (
-                            "The following transition could not be "
-                            "handled: Proposer: {}, from state "
-                            "{} to {}.").format(*indx)
-                            raise ValueError(error_msg)
+                            raise ApprovalCommitteeError(indx)
 
                     self.P_approvals[indx] = p_approved
                     p_rejected = 1 - p_approved

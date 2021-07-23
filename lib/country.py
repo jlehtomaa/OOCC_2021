@@ -17,7 +17,6 @@ class Country:
                  ideal_temp: float,
                  m_damage: float,
                  power: float,
-
                  ):
 
         assert m_damage >= 0., "Marginal damage cannot be negative"
@@ -51,7 +50,7 @@ class Country:
 
     @property
     def weighted_damage(self) -> float:
-        """Power-weighter marginal damages.
+        """Power-weighter marginal damage.
         Corresponds to parameter eta in eq. (B.7).
         """
         return self.power * self.m_damage
@@ -74,6 +73,6 @@ class Country:
         """ Eq. (B.3). Country's payoff function under geoengineering.
 
         Arguments:
-            G: Current geoengineering deployment.
+            G: Current global geoengineering deployment.
         """
         return -self.damage(G)

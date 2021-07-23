@@ -44,8 +44,12 @@ class State:
         Note: we assume that the strongest_coalition is unique.
         """
         if self.power_rule == "power_threshold":
+            # Coalition with the highest share of the world power
+            # gets to implement geoengineering, if minimum threshold is met.
             def sort_key(coalition): return coalition.total_power
         elif self.power_rule == "weak_governance":
+            # Free-driver case: Coalition with the highest average ideal
+            # geoengineering level gets to deploy.
             def sort_key(coalition): return coalition.avg_ideal_G
         else:
             msg = ("Incorrect power threshold specification. "

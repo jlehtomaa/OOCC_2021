@@ -25,14 +25,14 @@ class MDP:
         for an individual player.
 
         Arguments:
-            payoffs: A size n_states vector of payoffs.
+            payoffs: A vector of payoffs size n_states for a single country.
         """
 
         A = np.zeros((self.n_states, self.n_states))
         b = np.zeros(self.n_states)
+        P = self.transition_probs
 
         for state in range(self.n_states):
-            P = self.transition_probs
             for next_state, prob in enumerate(P.iloc[state, :]):
                 A[state][next_state] = self.discounting * prob
 
