@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import warnings
 from typing import List, Dict
 from lib.utils import get_approval_committee, list_members
 from lib.errors import ApprovalCommitteeError
@@ -80,11 +81,15 @@ class TransitionProbabilities:
         return probability
 
     def read_approval_probs(self, approvers: List[str], proposer: str,
-                           current_state: str, next_state: str) -> float:
+                            current_state: str, next_state: str) -> float:
         """Reads the acceptance probabilities for all members in approvers."""
         probability = self.df.loc[(current_state, 'Acceptance', approvers),
                                   (f'Proposer {proposer}', next_state)]
         return probability
+
+    def empty_approval_committee_warning(self, indx: tuple):
+        msg = f"Empty appoval committee for {indx[0]}: {indx[1]} -> {indx[2]}"
+        warnings.warn(msg)
 
     def transition_probabilities_with_unanimity(self):
         """Calculate transition probabilities with a perfectly unanimous
@@ -96,7 +101,6 @@ class TransitionProbabilities:
                 for next_state in self.states:
 
                     indx = (proposer, current_state, next_state)
-
                     approvers = get_approval_committee(
                         self.effectivity, self.players, *indx)
 
@@ -111,11 +115,7 @@ class TransitionProbabilities:
                     # some transitions are forbidden.
                     if len(approvers) == 0:
                         p_approved = 0.
-                        warning = ("WARNING: Transition with an empty "
-                                   "approval committee for proposer {}, "
-                                   "current state {}, next state {}").format(
-                                       *indx)
-                        print(warning)
+                        self.empty_approval_committee_warning(indx)
 
                     # The probability of a transition being approved equals
                     # the probability that all approval committee members
@@ -123,6 +123,7 @@ class TransitionProbabilities:
                     elif 1 <= len(approvers) <= 2:
                         probs = self.read_approval_probs(approvers, *indx)
                         p_approved = np.prod(probs)
+                        # print(*indx, approvers, probs.values, p_approved)
                     else:
                         raise ApprovalCommitteeError(indx)
 
@@ -169,10 +170,12 @@ class TransitionProbabilities:
                     # ----------------------
 
                     # If the approval committee is empty, the state transition
-                    # is impossible. This should not really happen.
+                    # is impossible. This should not really happen in the
+                    # scenarios considered here. One could add cases where
+                    # some transitions are forbidden.
                     if len(approvers) == 0:
                         p_approved = 0.
-                        print("WARNING: transition with empty approval comm.")
+                        self.empty_approval_committee_warning(indx)
 
                     # If the approval committee only has one member, it can
                     # decide alone whether or not to approve the transition
@@ -181,7 +184,8 @@ class TransitionProbabilities:
                     # where C is the only one who needs to approve.
                     elif len(approvers) == 1:
                         p_approved = self.read_approval_probs(
-                         approvers, *indx).values
+                            approvers, *indx).values
+                        # print(*indx, approvers, p_approved)
 
                     # For a larger approval committee, we need to consider
                     # the cases where majority approval committee can
@@ -206,7 +210,7 @@ class TransitionProbabilities:
                             # CASE 1:
                             # If there are new non-proposer members joining
                             # the new coalition, and the proposer is not
-                            # an existing member, all of the new non-proposer 
+                            # an existing member, all of the new non-proposer
                             # members approve the transition.
                             # E.g., W proposing ( ) -> (TC) or ( ) -> (WTC)
                             # must be approved by both T and C.
@@ -219,11 +223,13 @@ class TransitionProbabilities:
                             # E.g., W proposing (WC) -> (WT) or (WC) -> (WTC)
                             # must be approved by T but not C.
                             if (proposer not in current_members) or\
-                                (proposer in current_members and\
+                                (proposer in current_members and
                                     proposer in next_members):
                                 probs = self.read_approval_probs(
                                     new_non_proposer_members, *indx)
                                 p_approved = np.prod(probs)
+                                # print(*indx, new_non_proposer_members,
+                                #       probs.values, p_approved)
 
                             # CASE 2:
                             # If there are new non-proposer members joining
@@ -238,13 +244,15 @@ class TransitionProbabilities:
                                 probs = self.read_approval_probs(
                                     next_members, *indx)
                                 p_approved = np.prod(probs)
+                                # print(*indx, next_members, probs.values,
+                                #       p_approved)
                             else:
                                 raise ApprovalCommitteeError(indx)
 
                         # CASE 3:
                         # If there are no new non-proposer members,
                         # at least one existing member must approve the
-                        # proposed transition. 
+                        # proposed transition.
                         # E.g., W proposing (TC) -> ( ) or (TC) -> (WC)
                         # or (WTC) -> ( ) or (WTC) -> (WC) can be approved by
                         # either T or C, or W proposing (WTC)
@@ -252,6 +260,8 @@ class TransitionProbabilities:
                             probs = self.read_approval_probs(
                                     current_non_proposer_members, *indx)
                             p_approved = np.sum(probs) - np.prod(probs)
+                            # print(*indx, current_non_proposer_members,
+                            #       probs.values, p_approved)
                         else:
                             raise ApprovalCommitteeError(indx)
 
@@ -268,5 +278,3 @@ class TransitionProbabilities:
 
         self.safety_checks()
         return (self.P, self.P_proposals, self.P_approvals)
-
-#print(proposer, current_state, next_state, next_members)

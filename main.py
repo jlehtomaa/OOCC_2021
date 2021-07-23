@@ -3,7 +3,7 @@ import pandas as pd
 from lib.country import Country
 from lib.coalition import Coalition
 from lib.state import State
-from lib.transition_probabilities import TransitionProbabilities
+from lib.probabilities import TransitionProbabilities
 from lib.mdp import MDP
 from lib.utils import (derive_effectivity,
                        get_payoff_matrix,
