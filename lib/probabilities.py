@@ -95,7 +95,7 @@ class TransitionProbabilities:
         """Calculate transition probabilities with a perfectly unanimous
         approval committee.
         """
-
+        
         for proposer in self.players:
             for current_state in self.states:
                 for next_state in self.states:

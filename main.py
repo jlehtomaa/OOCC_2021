@@ -31,7 +31,7 @@ def run_experiment(config):
     # coalition_map = {state name: coalition structure}
     W, T, C = all_countries
     coalition_map = {
-        '()': [Coalition([W]), Coalition([T]), Coalition([C])],
+        '( )': [Coalition([W]), Coalition([T]), Coalition([C])],
         '(TC)': [Coalition([W]), Coalition([T, C])],
         '(WC)': [Coalition([T]), Coalition([W, C])],
         '(WT)': [Coalition([C]), Coalition([W, T])],
@@ -113,7 +113,7 @@ def main():
         protocol={player: 1/n_players for player in players},
         discounting=0.99,
         players=players,
-        state_names=['()', '(TC)', '(WC)', '(WT)', '(WTC)'],
+        state_names=['( )', '(TC)', '(WC)', '(WT)', '(WTC)'],
         strategy_table_path="./strategy_tables/"
     )
 

@@ -46,8 +46,10 @@ def list_members(state: str) -> List[str]:
     """ Lists all the member countries of the existing coalition.
 
     For instance, list_current_members('(WTC)') returns ['W', 'T', 'C'].
+    For ( ), returns an empty list.
     """
-    return list(state[state.find("(")+1:state.find(")")])
+    no_brackets = list(state[state.find("(")+1:state.find(")")])
+    return [char for char in no_brackets if char != " "]
 
 
 def get_approval_committee(effectivity: Dict[tuple, int], players: List[str],
