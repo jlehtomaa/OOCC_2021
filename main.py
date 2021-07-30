@@ -1,5 +1,12 @@
-import pandas as pd
+"""
+Authors: Jere Lehtomaa & Daniel Heyen.
 
+Replicates all results in Heyen & Lehtomaa (2021): Solar Geoengineering
+Governance: A Dynamic Framework of Farsighted Coalition Formation.
+"""
+
+
+import pandas as pd
 from lib.country import Country
 from lib.coalition import Coalition
 from lib.state import State
@@ -9,7 +16,7 @@ from lib.utils import (derive_effectivity,
                        get_payoff_matrix,
                        get_geoengineering_levels,
                        verify_equilibrium,
-                       write_result_tables_to_latex)
+                       write_latex_tables)
 
 
 def run_experiment(config):
@@ -166,9 +173,8 @@ def main():
         except AssertionError:
             print(message)
 
-        write_result_tables_to_latex(experiment_results,
-                                     variables=["V", "payoffs", "P",
-                                                "geoengineering"])
+        write_latex_tables(experiment_results,
+                           variables=["V", "payoffs", "P", "geoengineering"])
 
         print("Experiment:", experiment)
         print("Status:", message)

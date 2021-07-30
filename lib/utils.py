@@ -57,7 +57,7 @@ def get_approval_committee(effectivity: Dict[tuple, int], players: List[str],
                            next_state: str) -> List[str]:
     """Returns the list of all players who belong to the approval committee
     when proposer proposes the transition (current_state) -> (next_state).
-    
+
     Arguments:
         effectivity: The effectivity correspondence, from derive_effectivity().
         players: The list (string) of all countries in the game.
@@ -129,10 +129,8 @@ def derive_effectivity(df: pd.DataFrame, players: List[str],
                 # proposer is the only member in the effectivity
                 # correspondence. Similarly, any country is allowed to
                 # walk out of its existing coalition.
-                if current_state == next_state or is_uniform_breakout(
-                                                        proposer,
-                                                        current_state,
-                                                        next_state):
+                if current_state == next_state or is_unilateral_breakout(
+                                    proposer, current_state, next_state):
 
                     committee = get_approval_committee(effectivity, players,
                                                        proposer, current_state,
@@ -142,12 +140,12 @@ def derive_effectivity(df: pd.DataFrame, players: List[str],
     return effectivity
 
 
-def is_uniform_breakout(proposer: str, current_state: str,
-                        next_state: str) -> bool:
+def is_unilateral_breakout(proposer: str, current_state: str,
+                           next_state: str) -> bool:
     """Check if the current transition corresponds to the proposer alone
-    walking out of an existing coalition. Such a move is always allowed, 
+    walking out of an existing coalition. Such a move is always allowed,
     and needs not be approved by any other players.
-    
+
     Arguments:
         proposer: Name of the current proposer. E.g., 'T'.
         current_state: Current coalition structure. E.g., '(WTC)'.
@@ -178,7 +176,7 @@ def verify_proposals(players: List[str], states: List[str],
                      V: pd.DataFrame) -> Tuple[bool, str]:
     """Checks that the proposal strategies of all players constitute a
     valid equilibrium, as specified in Condition 1 in section A.5.
-    
+
     Arguments:
         players: A list of all countries in the game.
         states: A list of all possible states in the system.
@@ -253,7 +251,7 @@ def verify_approvals(players: List[str], states: List[str],
                      strategy_df: pd.DataFrame) -> Tuple[bool, str]:
     """Checks that the approval strategies of all players constitute a
     valid equilibrium, as specified in Condition 2 in section A.5.
-    
+
     Arguments:
         players: A list of all countries in the game.
         states: A list of all possible states in the system.
@@ -270,7 +268,7 @@ def verify_approvals(players: List[str], states: List[str],
                 # Approval committee for this transition.
                 approvers = get_approval_committee(
                     effectivity, players, proposer, current_state, next_state)
-                
+
                 for approver in approvers:
                     V_current = V.loc[current_state, approver]
                     V_next = V.loc[next_state, approver]
@@ -305,7 +303,7 @@ def verify_approvals(players: List[str], states: List[str],
 def verify_equilibrium(result: Dict[str, Any]):
     """Checks that the experiment results and strategy profiles are a
     valid equilibrium.
-    
+
     Arguments:
         results: A dictionary from main.run_experiment().
     """
@@ -331,11 +329,11 @@ def verify_equilibrium(result: Dict[str, Any]):
         return False, '\n'.join(messages)
 
 
-def write_result_tables_to_latex(result: Dict[str, Any], variables: List[str],
-                                 results_path: str = "./results",
-                                 float_format: str = "%.5f") -> None:
+def write_latex_tables(result: Dict[str, Any], variables: List[str],
+                       results_path: str = "./results",
+                       float_format: str = "%.5f") -> None:
     """Writes experiment results as .tex tables.
-    
+
     Arguments:
         results: A dictionary from main.run_experiment().
         variables: A list of items in results.keys() to store.

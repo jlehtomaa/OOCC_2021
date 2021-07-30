@@ -10,6 +10,10 @@ class MDP:
         n_states: Number of possible states in the system.
         transition_probs: n_states * n_states matrix of probabilities.
         discounting: Discounting (and farsightedness) parameter.
+
+    Implementation of this class follows closely the structure in:
+    http://aima.cs.berkeley.edu/python/mdp.html and
+    https://github.com/akaAlbo/deeprlbootcamp/tree/master/lab1
     """
     def __init__(self,
                  n_states: int,
