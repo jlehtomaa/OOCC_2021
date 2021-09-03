@@ -1,8 +1,8 @@
 # OOCC_2021
 
-This is an accompanying code repository for the open-access publication Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation (Heyen & Lehtomaa, 2021).
+This is an accompanying code repository for the open-access publication *Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation (Heyen & Lehtomaa, 2021)*.
 Running the code replicates and verifies all equilibria and numerical results discussed in the paper.
-The paper can be accessed at: xxx.
+The paper can be accessed on the [journal's website](https://academic.oup.com/oocc/issue/1/1).
 
 ```
 @article{heyen2021solar,
