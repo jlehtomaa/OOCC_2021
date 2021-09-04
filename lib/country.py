@@ -3,7 +3,7 @@ class Country:
 
     Arguments:
         name: Player name ('W', 'T', or 'C' used in the paper).
-        base_temp: Preindustrial baseline temperature. T^base in eq. (B.1
+        base_temp: Preindustrial baseline temperature. T^base in eq. (B.1)
         delta_temp: Climate-induced temperature change. Delta in eq. (B.1).
         ideal_temp: Ideal temperature. T^ideal in eq. (B.3).
         m_damage: Marginal damage term. Param. d in eq. (B.3).
