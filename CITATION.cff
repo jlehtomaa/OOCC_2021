@@ -3,30 +3,26 @@ message: "To cite this work, please use the following."
 authors:
 - family-names: "Heyen"
   given-names: "Daniel"
-  orcid: "https://orcid.org/0000-0000-0000-0000"
 - family-names: "Lehtomaa"
   given-names: "Jere"
-  orcid: "https://orcid.org/0000-0000-0000-0000"
-title: "Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation"
+title: "OOCC_2021"
 version: 1.0.0
 doi: xxxxxxxxxxxxxxxxxx
 date-released: 20121-10-01
-url: "https://github.com/github/linguist"
+url: "https://github.com/jlehtomaa/OOCC_2021"
 preferred-citation:
   type: article
   authors:
   - family-names: "Heyen"
     given-names: "Daniel"
-    orcid: "https://orcid.org/0000-0000-0000-0000"
   - family-names: "Lehtomaa"
     given-names: "Jere"
-    orcid: "https://orcid.org/0000-0000-0000-0000"
   doi: "xxxxxxxxxxxx"
   journal: "Oxford Open Climate Change"
-  month: 9
+  month: 10
   start: 1 # First page number
   end: 10 # Last page number
-  title: "My awesome research publication"
+  title: "Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation"
   issue: 1
   volume: 1
   year: 2021
