@@ -23,7 +23,7 @@ To cite this work, please use:
 ```
 
 ### Requirements
-Running the code relies on minimum dependencies: only `numpy`, `pandas`, (and `pytest` for testing) are required.
+Running the code relies on minimum dependencies: only `numpy` and `pandas` (and `pytest` for testing) are required.
 
 ### Running the code
 To replicate all results in the paper, simply run ```python main.py```.
