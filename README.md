@@ -1,6 +1,8 @@
 # OOCC_2021
 
-This repository accompanies the the open-access publication *Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation (Heyen & Lehtomaa, Oxford Open Climate Change, 2021)*.
+This repository accompanies the open-access publication *Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation (Heyen & Lehtomaa, Oxford Open Climate Change, 2021)*.
+
+
 Running the code verifies all equilibria and replicates all numerical results discussed in the paper.
 The paper can be accessed on the [journal's website](https://academic.oup.com/oocc/issue/1/1).
 To cite this work, please use:
