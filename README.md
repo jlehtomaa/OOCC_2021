@@ -8,19 +8,17 @@ The paper can be accessed on the [journal's website](https://academic.oup.com/oo
 To cite this work, please use:
 
 ```
-@article{heyen2021solar,
-    title = {Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation},
-    journal = {Oxford Open Climate Change},
-    volume = {1},
-    issn = {xxx},
-    url = {xxx},
-    doi = {xxx},
-    urldate = {xxx},
+@article{10.1093/oxfclm/kgab010,
     author = {Heyen, Daniel and Lehtomaa, Jere},
-    month = {sep},
+    title = "{Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation}",
+    journal = {Oxford Open Climate Change},
     year = {2021},
-    keywords = {xxx},
-    pages = {xxx},
+    month = {09},
+    issn = {2634-4068},
+    doi = {10.1093/oxfclm/kgab010},
+    url = {https://doi.org/10.1093/oxfclm/kgab010},
+    note = {kgab010},
+    eprint = {https://academic.oup.com/oocc/advance-article-pdf/doi/10.1093/oxfclm/kgab010/40392174/kgab010.pdf},
 }
 ```
 
