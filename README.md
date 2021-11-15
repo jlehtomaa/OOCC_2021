@@ -4,11 +4,11 @@ This repository accompanies the open-access publication *Solar Geoengineering Go
 
 
 Running the code verifies all equilibria and replicates all numerical results discussed in the paper.
-The paper can be accessed on the [journal's website](https://academic.oup.com/oocc/issue/1/1).
+The paper can be accessed on the [journal's website](https://academic.oup.com/oocc/article/1/1/kgab010/6370712).
 To cite this work, please use:
 
 ```
-@article{10.1093/oxfclm/kgab010,
+@article{heyen2021solar,
     author = {Heyen, Daniel and Lehtomaa, Jere},
     title = "{Solar Geoengineering Governance: A Dynamic Framework of Farsighted Coalition Formation}",
     journal = {Oxford Open Climate Change},
